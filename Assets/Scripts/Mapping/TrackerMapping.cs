@@ -100,7 +100,7 @@ namespace QuestMarkerTracking.Mapping
             _selectedCameraVirtualObject = cameraVirtualObject;
             _selectedCameraVirtualObject.Select();
             ProposeTracker(_selectedCameraVirtualObject);
-            StudyLogger.Instance.LogProposal();
+            StudyLogger.Instance?.LogProposal();
         }
 
         public void QuickMap()

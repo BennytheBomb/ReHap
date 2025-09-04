@@ -131,7 +131,7 @@ namespace QuestMarkerTracking
         
         public void FinishScenario(bool value)
         {
-            StudyLogger.Instance.SaveLogs();
+            StudyLogger.Instance?.SaveLogs();
             Application.Quit();
         }
 

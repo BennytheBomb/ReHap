@@ -59,6 +59,7 @@ namespace QuestMarkerTracking.Tracking
 
         private enum MarkerArrangement
         {
+            Single,
             GridBoard,
             Cube
         }
@@ -348,48 +349,33 @@ namespace QuestMarkerTracking.Tracking
             else
             {
                 var trackedMarkers = new List<TrackedMarker>();
-                
-                var cubeMarkerDict = new Dictionary<int, List<CubeMarkerData>>();
 
-                if (detectedMarkerCorners.Count > 0)
+                if (markerArrangement == MarkerArrangement.Single)
                 {
-                    for (var i = 0; i < _gridBoards.Count; i++)
+                    using var objectPoints = new MatOfPoint3f(new Point3(-markerLength / 2f, markerLength / 2f, 0),
+                        new Point3(markerLength / 2f, markerLength / 2f, 0),
+                        new Point3(markerLength / 2f, -markerLength / 2f, 0),
+                        new Point3(-markerLength / 2f, -markerLength / 2f, 0));
+                    
+                    for (var i = 0; i < detectedMarkerCorners.Count; i++)
                     {
-                        var gridBoard = _gridBoards[i];
+                        var currentMarkerId = (int)detectedMarkerIds.get(i, 0)[0];
+
+                        if (!_trackerSimulation.HasTargetForMarkerId(currentMarkerId))
+                            continue;
+
+                        using var rotationVec = new Mat(1, 1, CvType.CV_64FC3);
+                        using var translationVec = new Mat(1, 1, CvType.CV_64FC3);
+                        using var corner_4x1 = detectedMarkerCorners[i].reshape(2, 4);
+                        using var imagePoints = new MatOfPoint2f(corner_4x1);
+                        Calib3d.solvePnP(objectPoints, imagePoints, _cameraIntrinsicMatrix, _cameraDistortionCoeffs,
+                            rotationVec, translationVec);
                         
-                        var markerId = markerArrangement == MarkerArrangement.Cube
-                            ? i / CUBE_SIDES
-                            : i;
-
-                        if (!_trackerSimulation.HasTargetForMarkerId(markerId))
-                            continue;
-
-                        using var rvec = new Mat(1, 1, CvType.CV_64FC3);
-                        using var tvec = new Mat(1, 1, CvType.CV_64FC3);
-                        using var gridBoardObjectPoints = new Mat();
-                        using var imagePoints = new Mat();
-
-                        gridBoard.matchImagePoints(detectedMarkerCorners, detectedMarkerIds, gridBoardObjectPoints, imagePoints);
-
-                        if (imagePoints.total() != gridBoardObjectPoints.total())
-                            continue;
-
-                        if (gridBoardObjectPoints.total() == 0) // 0 of the detected markers in board
-                            continue;
-
-                        using var objectPointsP3F = new MatOfPoint3f(gridBoardObjectPoints);
-                        using var imagePointsP3F = new MatOfPoint2f(imagePoints);
-                        Calib3d.solvePnP(objectPointsP3F, imagePointsP3F, _cameraIntrinsicMatrix, _cameraDistortionCoeffs,
-                            rvec, tvec);
-
-                        var markersOfBoardDetected = (int)gridBoardObjectPoints.total() / 4;
-                        if (markersOfBoardDetected <= 0) continue;
-
                         var rvecArr = new double[3];
-                        rvec.get(0, 0, rvecArr);
+                        rotationVec.get(0, 0, rvecArr);
                         var tvecArr = new double[3];
-                        tvec.get(0, 0, tvecArr);
-
+                        translationVec.get(0, 0, tvecArr);
+                        
                         var markerPoseData = ARUtils.ConvertRvecTvecToPoseData(rvecArr, tvecArr); // OpenCV right-handed coordinate system
                         var localSpaceMarkerMatrix = ARUtils.ConvertPoseDataToMatrix(ref markerPoseData, true);
                         var localSpaceMarkerPoseData = ARUtils.ConvertMatrixToPoseData(ref localSpaceMarkerMatrix); // Unity left-handed coordinate system
@@ -407,81 +393,160 @@ namespace QuestMarkerTracking.Tracking
                             rot = interpolatedHeadPoseData.rot * localSpaceMarkerPoseData.rot
                         };
 
-                        var correctedRotation = worldSpaceMarkerPoseData.rot * TrackerRotationOffset;
-                        var centeredMarkerPose = new PoseData
+                        // var correctedRotation = worldSpaceMarkerPoseData.rot * TrackerRotationOffset;
+                        // var centeredMarkerPose = new PoseData
+                        // {
+                        //     pos = worldSpaceMarkerPoseData.pos + correctedRotation * MarkerOffset,
+                        //     rot = correctedRotation
+                        // };
+
+                        var accuracy = CalculateTrackerAccuracy(worldSpaceMarkerPoseData, interpolatedHeadPoseData);
+
+                        trackedMarkers.Add(new TrackedMarker
                         {
-                            pos = worldSpaceMarkerPoseData.pos + correctedRotation * MarkerOffset,
-                            rot = correctedRotation
-                        };
-                        
-                        var accuracy = markersOfBoardDetected / (float)(gridBoardRows * gridBoardColumns);
+                            Id = i,
+                            MarkerPoseData = worldSpaceMarkerPoseData,
+                            IsHighConfidence = accuracy > 0.9f,
+                            Accuracy = accuracy
+                        });
+                    }
+                }
+                else
+                {
+                    var cubeMarkerDict = new Dictionary<int, List<CubeMarkerData>>();
+
+                    if (detectedMarkerCorners.Count > 0)
+                    {
+                        for (var i = 0; i < _gridBoards.Count; i++)
+                        {
+                            var gridBoard = _gridBoards[i];
+                            
+                            var markerId = markerArrangement == MarkerArrangement.Cube
+                                ? i / CUBE_SIDES
+                                : i;
+
+                            if (!_trackerSimulation.HasTargetForMarkerId(markerId))
+                                continue;
+
+                            using var rvec = new Mat(1, 1, CvType.CV_64FC3);
+                            using var tvec = new Mat(1, 1, CvType.CV_64FC3);
+                            using var gridBoardObjectPoints = new Mat();
+                            using var imagePoints = new Mat();
+
+                            gridBoard.matchImagePoints(detectedMarkerCorners, detectedMarkerIds, gridBoardObjectPoints, imagePoints);
+
+                            if (imagePoints.total() != gridBoardObjectPoints.total())
+                                continue;
+
+                            if (gridBoardObjectPoints.total() == 0) // 0 of the detected markers in board
+                                continue;
+
+                            using var objectPointsP3F = new MatOfPoint3f(gridBoardObjectPoints);
+                            using var imagePointsP3F = new MatOfPoint2f(imagePoints);
+                            Calib3d.solvePnP(objectPointsP3F, imagePointsP3F, _cameraIntrinsicMatrix, _cameraDistortionCoeffs,
+                                rvec, tvec);
+
+                            var markersOfBoardDetected = (int)gridBoardObjectPoints.total() / 4;
+                            if (markersOfBoardDetected <= 0) continue;
+
+                            var rvecArr = new double[3];
+                            rvec.get(0, 0, rvecArr);
+                            var tvecArr = new double[3];
+                            tvec.get(0, 0, tvecArr);
+
+                            var markerPoseData = ARUtils.ConvertRvecTvecToPoseData(rvecArr, tvecArr); // OpenCV right-handed coordinate system
+                            var localSpaceMarkerMatrix = ARUtils.ConvertPoseDataToMatrix(ref markerPoseData, true);
+                            var localSpaceMarkerPoseData = ARUtils.ConvertMatrixToPoseData(ref localSpaceMarkerMatrix); // Unity left-handed coordinate system
+
+                            // Correct z-offset of marker to camera based on distance due to perspective projection
+                            var z = localSpaceMarkerPoseData.pos.z;
+                            if (!Mathf.Approximately(z, 0f) && !Mathf.Approximately(offsetCorrectionCoefficient, 0f))
+                            {
+                                localSpaceMarkerPoseData.pos.z -= Mathf.Clamp(1f / (offsetCorrectionCoefficient * z), 0f, maxOffsetCorrection);
+                            }
+
+                            var worldSpaceMarkerPoseData = new PoseData
+                            {
+                                pos = headPoseMatrix.MultiplyPoint(localSpaceMarkerPoseData.pos),
+                                rot = interpolatedHeadPoseData.rot * localSpaceMarkerPoseData.rot
+                            };
+
+                            var correctedRotation = worldSpaceMarkerPoseData.rot * TrackerRotationOffset;
+                            var centeredMarkerPose = new PoseData
+                            {
+                                pos = worldSpaceMarkerPoseData.pos + correctedRotation * MarkerOffset,
+                                rot = correctedRotation
+                            };
+                            
+                            var accuracy = markersOfBoardDetected / (float)(gridBoardRows * gridBoardColumns);
+
+                            if (markerArrangement == MarkerArrangement.Cube)
+                            {
+                                var cubeId = i / CUBE_SIDES;
+                                if (!cubeMarkerDict.ContainsKey(cubeId))
+                                {
+                                    cubeMarkerDict[cubeId] = new List<CubeMarkerData>();
+                                }
+                                
+                                cubeMarkerDict[cubeId].Add(new CubeMarkerData
+                                {
+                                    SideIndex = i % CUBE_SIDES,
+                                    MarkerPoseData = centeredMarkerPose,
+                                    Accuracy = accuracy,
+                                });
+                            }
+                            else
+                            {
+                                trackedMarkers.Add(new TrackedMarker
+                                {
+                                    Id = i,
+                                    MarkerPoseData = centeredMarkerPose,
+                                    IsHighConfidence = markersOfBoardDetected >= gridBoardRows * gridBoardColumns,
+                                    Accuracy = accuracy
+                                });
+                            }
+                        }
 
                         if (markerArrangement == MarkerArrangement.Cube)
                         {
-                            var cubeId = i / CUBE_SIDES;
-                            if (!cubeMarkerDict.ContainsKey(cubeId))
+                            foreach (var (cubeId, cubeMarkers) in cubeMarkerDict)
                             {
-                                cubeMarkerDict[cubeId] = new List<CubeMarkerData>();
+                                var centerPositions = cubeMarkers.Select(marker =>
+                                {
+                                    var inwardsDirection = (marker.MarkerPoseData.rot * Vector3.down).normalized;
+                                    return marker.MarkerPoseData.pos + inwardsDirection * (markerLength + 1.5f * markerSeparation); // TODO: generalize for gridboard
+                                }).ToList();
+                                
+                                var centerRotations = cubeMarkers.Select(marker => marker.MarkerPoseData.rot * CorrectSideRotation(marker.SideIndex)).ToList();
+                                
+                                // var markerAccuracies = cubeMarkers.Select(marker =>
+                                //     CalculateTrackerAccuracy(marker.MarkerPoseData, interpolatedHeadPoseData)).ToList();
+                                
+                                var markerAccuracies = cubeMarkers.Select(marker => marker.Accuracy).ToList();
+
+                                var averageMarkerAccuracy = markerAccuracies.Average();
+
+                                var centerPosition = TrackerSettings.Instance.useWeightedAverage ? MathUtils.AveragePosition(centerPositions, markerAccuracies) : MathUtils.AveragePosition(centerPositions);
+                                var centerRotation = TrackerSettings.Instance.useWeightedAverage ? MathUtils.AverageRotation(centerRotations, markerAccuracies) : MathUtils.AverageRotation(centerRotations);
+                                
+                                var markerPoseData = new PoseData
+                                {
+                                    pos = centerPosition,
+                                    rot = centerRotation
+                                };
+
+                                // var accuracy = CalculateTrackerAccuracy(markerPoseData, interpolatedHeadPoseData);
+
+                                const int halfCubeSides = CUBE_SIDES / 2;
+
+                                trackedMarkers.Add(new TrackedMarker
+                                {
+                                    Id = cubeId,
+                                    MarkerPoseData = markerPoseData,
+                                    IsHighConfidence = cubeMarkers.Count >= halfCubeSides,
+                                    Accuracy = averageMarkerAccuracy
+                                });
                             }
-                            
-                            cubeMarkerDict[cubeId].Add(new CubeMarkerData
-                            {
-                                SideIndex = i % CUBE_SIDES,
-                                MarkerPoseData = centeredMarkerPose,
-                                Accuracy = accuracy,
-                            });
-                        }
-                        else
-                        {
-                            trackedMarkers.Add(new TrackedMarker
-                            {
-                                Id = i,
-                                MarkerPoseData = centeredMarkerPose,
-                                IsHighConfidence = markersOfBoardDetected >= gridBoardRows * gridBoardColumns,
-                                Accuracy = accuracy
-                            });
-                        }
-                    }
-
-                    if (markerArrangement == MarkerArrangement.Cube)
-                    {
-                        foreach (var (cubeId, cubeMarkers) in cubeMarkerDict)
-                        {
-                            var centerPositions = cubeMarkers.Select(marker =>
-                            {
-                                var inwardsDirection = (marker.MarkerPoseData.rot * Vector3.down).normalized;
-                                return marker.MarkerPoseData.pos + inwardsDirection * (markerLength + 1.5f * markerSeparation); // TODO: generalize for gridboard
-                            }).ToList();
-                            
-                            var centerRotations = cubeMarkers.Select(marker => marker.MarkerPoseData.rot * CorrectSideRotation(marker.SideIndex)).ToList();
-                            
-                            // var markerAccuracies = cubeMarkers.Select(marker =>
-                            //     CalculateTrackerAccuracy(marker.MarkerPoseData, interpolatedHeadPoseData)).ToList();
-                            
-                            var markerAccuracies = cubeMarkers.Select(marker => marker.Accuracy).ToList();
-
-                            var averageMarkerAccuracy = markerAccuracies.Average();
-
-                            var centerPosition = TrackerSettings.Instance.useWeightedAverage ? MathUtils.AveragePosition(centerPositions, markerAccuracies) : MathUtils.AveragePosition(centerPositions);
-                            var centerRotation = TrackerSettings.Instance.useWeightedAverage ? MathUtils.AverageRotation(centerRotations, markerAccuracies) : MathUtils.AverageRotation(centerRotations);
-                            
-                            var markerPoseData = new PoseData
-                            {
-                                pos = centerPosition,
-                                rot = centerRotation
-                            };
-
-                            // var accuracy = CalculateTrackerAccuracy(markerPoseData, interpolatedHeadPoseData);
-
-                            const int halfCubeSides = CUBE_SIDES / 2;
-
-                            trackedMarkers.Add(new TrackedMarker
-                            {
-                                Id = cubeId,
-                                MarkerPoseData = markerPoseData,
-                                IsHighConfidence = cubeMarkers.Count >= halfCubeSides,
-                                Accuracy = averageMarkerAccuracy
-                            });
                         }
                     }
                 }

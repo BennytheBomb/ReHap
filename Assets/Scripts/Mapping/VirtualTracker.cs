@@ -8,7 +8,7 @@ namespace QuestMarkerTracking.Mapping
         public void OnGrab()
         {
             Debug.Log("VirtualTracker grabbed: " + gameObject.name);
-            StudyLogger.Instance.LogHandPickup(gameObject.name);
+            StudyLogger.Instance?.LogHandPickup(gameObject.name);
         }
     }
 }

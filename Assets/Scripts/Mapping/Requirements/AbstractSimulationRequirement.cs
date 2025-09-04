@@ -18,7 +18,7 @@ namespace QuestMarkerTracking.Mapping.Requirements
             if (isRequirementMet && !requirementMet)
             {
                 // Log requirement failure
-                StudyLogger.Instance.LogError(requirementText);
+                StudyLogger.Instance?.LogError(requirementText);
             }
 
             isRequirementMet = requirementMet;

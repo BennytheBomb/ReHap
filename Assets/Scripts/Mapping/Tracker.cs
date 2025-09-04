@@ -55,7 +55,7 @@ namespace QuestMarkerTracking.Mapping
                 Debug.Log("Most upward face index: " + mostUpwardFace + ", angle to up: " + deltaAngle);
                 _upwardFace = mostUpwardFace;
                 onTopFaceChanged?.Invoke(this);
-                StudyLogger.Instance.LogTilt(gameObject.name);
+                StudyLogger.Instance?.LogTilt(gameObject.name);
             }
 
             if (TrackerSettings.Instance.showGizmos)
@@ -80,7 +80,7 @@ namespace QuestMarkerTracking.Mapping
         {
             if (selectedCameraVirtualObject.IsPaired) return;
             
-            StudyLogger.Instance.LogPairing(gameObject.name, selectedCameraVirtualObject.name);
+            StudyLogger.Instance?.LogPairing(gameObject.name, selectedCameraVirtualObject.name);
             
             LastUsedTime = Time.time;
 

@@ -108,7 +108,7 @@ namespace QuestMarkerTracking.Tracking
                 foreach (var markerId in frameTrackerData.UntrackedMarkerIds)
                 {
                     var markerSnapshot = _trackerSnapshots[markerId];
-                    if (!markerSnapshot.trackingLost) StudyLogger.Instance.LogCubeTrackingLost(markerId);
+                    if (!markerSnapshot.trackingLost) StudyLogger.Instance?.LogCubeTrackingLost(markerId);
                     markerSnapshot.trackingLost = true;
                 }
             }

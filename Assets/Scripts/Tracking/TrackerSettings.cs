@@ -79,19 +79,20 @@ namespace QuestMarkerTracking.Tracking
             if (leftHand)
             {
                 if (Vector3.Distance(LeftHandPosition, leftHand.transform.position) > 0.02f || Quaternion.Angle(LeftHandRotation, leftHand.transform.rotation) > 3f)
-                    StudyLogger.Instance.LogHandMotion("LeftHand", leftHand.transform.position, leftHand.transform.rotation);
+                    StudyLogger.Instance?.LogHandMotion("LeftHand", leftHand.transform.position, leftHand.transform.rotation);
                 LeftHandPosition = leftHand.transform.position;
                 LeftHandRotation = leftHand.transform.rotation;
-                if (!leftHand.IsTracked && IsLeftHandTracked) StudyLogger.Instance.LogHandTrackingLost("LeftHand");
+                if (!leftHand.IsTracked && IsLeftHandTracked) StudyLogger.Instance?.LogHandTrackingLost("LeftHand");
                 IsLeftHandTracked = leftHand.IsTracked;
             }
 
             if (rightHand)
             {
-                if (Vector3.Distance(RightHandPosition, rightHand.transform.position) > 0.02f || Quaternion.Angle(RightHandRotation, rightHand.transform.rotation) > 3f) StudyLogger.Instance.LogHandMotion("RightHand", rightHand.transform.position, rightHand.transform.rotation);
+                if (Vector3.Distance(RightHandPosition, rightHand.transform.position) > 0.02f || Quaternion.Angle(RightHandRotation, rightHand.transform.rotation) > 3f) 
+                    StudyLogger.Instance?.LogHandMotion("RightHand", rightHand.transform.position, rightHand.transform.rotation);
                 RightHandPosition = rightHand.transform.position;
                 RightHandRotation = rightHand.transform.rotation;
-                if (!rightHand.IsTracked && IsRightHandTracked) StudyLogger.Instance.LogHandTrackingLost("RightHand");
+                if (!rightHand.IsTracked && IsRightHandTracked) StudyLogger.Instance?.LogHandTrackingLost("RightHand");
                 IsRightHandTracked = rightHand.IsTracked;
             }
         }

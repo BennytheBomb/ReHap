@@ -106,7 +106,7 @@ namespace QuestMarkerTracking.Tracking.Data
             var standardVelocity = (currentPosition - previousPosition) / deltaTime;
             
             // Log here to ensure we log the latest data and not the stale one
-            if (Vector3.Distance(currentPosition, previousPosition) > 0.01f || Quaternion.Angle(currentRotation, previousRotation) > 5f) StudyLogger.Instance.LogCubeTrackerData(trackerData);
+            if (Vector3.Distance(currentPosition, previousPosition) > 0.01f || Quaternion.Angle(currentRotation, previousRotation) > 5f) StudyLogger.Instance?.LogCubeTrackerData(trackerData);
             
             var filteredVelocity = _velocityFilter.Step(standardVelocity, deltaTime);
 

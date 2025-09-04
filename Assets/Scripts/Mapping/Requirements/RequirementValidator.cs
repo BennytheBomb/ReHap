@@ -30,7 +30,7 @@ namespace QuestMarkerTracking.Mapping.Requirements
                 _requirementLabels[requirement] = label;
             }
 
-            StudyLogger.Instance.StartTask(UserStudyApp.Instance.CurrentScenario);
+            StudyLogger.Instance?.StartTask(UserStudyApp.Instance.CurrentScenario);
         }
 
         private void Update()
@@ -48,7 +48,7 @@ namespace QuestMarkerTracking.Mapping.Requirements
             
             if (_requirements.All(r => r.isRequirementMet))
             {
-                StudyLogger.Instance.EndTask();
+                StudyLogger.Instance?.EndTask();
                 UserStudyApp.Instance.ShowUI();
                 _isCompleted = true;
             }
