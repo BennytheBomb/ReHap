@@ -26,6 +26,15 @@ Keywords:
 2. Set Dictionary to 4x4 (50, 100, 250, 1000); Marker ID to 0; Marker size, mm to 100
 3. Look at the marker, you should see a sphere
 
+## Development
+
+- most interesting classes are MarkerTracking and TrackerSimulation, responsible for entire tracking logic including
+    - OpenCV detection pipeline
+    - head pose interpolation
+    - tracker pose filtering
+    - tracker pose prediction
+- customize the tracker itself and add functionality there
+
 ## Tracker
 
 - to build a tracker generate markers using a website like https://chev.me/arucogen/
