@@ -1,0 +1,53 @@
+// YUV420_ToGray_R8.compute
+// ----------------------------------------------------------------------
+// Reads a YUV_420_888 stream’s Y plane (ByteAddressBuffer) and writes
+// the normalized Y (0…1) into a single‐channel R8 UAV.
+// ----------------------------------------------------------------------
+
+#pragma kernel CSMain
+
+// --- Input (read‐only) ---
+ByteAddressBuffer YBuffer;   // Contains one byte per pixel (full resolution Y plane)
+uint              YRowStride;    // Bytes per row in the Y plane
+uint              TargetWidth;   // Width in pixels of Y plane
+uint              TargetHeight;  // Height in pixels of Y plane
+
+// --- Output (read‐write) ---
+RWTexture2D<float> OutputR;   // Must be bound to an R8_UNorm RenderTexture
+
+// Helper: fetch a single byte from ByteAddressBuffer at byteIndex
+uint GetByteFromBuffer(ByteAddressBuffer buf, uint byteIndex)
+{
+    // Each Load() reads a 32‐bit word. Compute which word holds our byte:
+    uint wordOffset = byteIndex / 4;            // index of 32‐bit word
+    uint word       = buf.Load(wordOffset * 4); // Load expects a byte‐address, so *4
+    uint byteInWord = byteIndex % 4;            // which byte inside that word (0…3)
+    return (word >> (byteInWord * 8)) & 0xFF;   // extract that byte
+}
+
+[numthreads(8, 8, 1)]
+void CSMain(uint3 id : SV_DispatchThreadID)
+{
+    // 1) Bounds check
+    if (id.x >= TargetWidth || id.y >= TargetHeight)
+        return;
+
+    // 2) If the incoming Y plane is vertically flipped, invert Y. If yours is not flipped,
+    //    just do: uint row = id.y;
+    uint flippedY = (TargetHeight - 1) - id.y;
+
+    // 3) Compute the byte index for Y:
+    //    Each row has YRowStride bytes; each pixel Y is one byte.
+    uint yIndex = flippedY * YRowStride + id.x;
+
+    // 4) Read the Y byte (0…255):
+    uint yValue = GetByteFromBuffer(YBuffer, yIndex);
+
+    // 5) Normalize to [0,1]:
+    float yf = float(yValue) / 255.0;
+
+    // 6) Write that single float into the R channel of our R8 UAV.
+    //    (Because OutputR is bound to an R8_UNorm texture,
+    //     writing [0,1] will be quantized to 0…255 under the hood.)
+    OutputR[id.xy] = yf;
+}

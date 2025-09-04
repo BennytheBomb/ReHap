@@ -1,0 +1,159 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &5367671735736395568
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4497337141999420411}
+  - component: {fileID: 2646431299146555902}
+  - component: {fileID: 3747270422505907192}
+  - component: {fileID: 2206128765754697872}
+  - component: {fileID: 3527328135003203205}
+  - component: {fileID: 9081182730887553068}
+  - component: {fileID: 8222231670630269868}
+  - component: {fileID: 7786876396798669053}
+  m_Layer: 0
+  m_Name: Requirements_Scenario1
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4497337141999420411
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5367671735736395568}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2646431299146555902
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5367671735736395568}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3e3d482475634a9b9664f8c2aac93285, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  virtualObjectManager: {fileID: 0}
+  requirementLabelParent: {fileID: 0}
+  requirementLabelPrefab: {fileID: 2359849878523242900, guid: e1c9f5ca1abe046bd889a552468e72b4, type: 3}
+--- !u!114 &3747270422505907192
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5367671735736395568}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e7bb1106afee49a99db45698464b6ca2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  requirementText: H needs to be close to S
+  isRequirementMet: 0
+  requiredDistance: 0.15
+  virtualObjectType1: 0
+  distanceType: 0
+  virtualObjectType2: 2
+--- !u!114 &2206128765754697872
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5367671735736395568}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e7bb1106afee49a99db45698464b6ca2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  requirementText: M needs to be far from S
+  isRequirementMet: 0
+  requiredDistance: 0.5
+  virtualObjectType1: 1
+  distanceType: 1
+  virtualObjectType2: 0
+--- !u!114 &3527328135003203205
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5367671735736395568}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 10732a0b8dd145cf824d601176ebc764, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  requirementText: S needs to be close to park
+  isRequirementMet: 0
+  requiredDistance: 0.6
+  virtualObjectType: 0
+  distanceType: 0
+  externalObject: {fileID: 0}
+--- !u!114 &9081182730887553068
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5367671735736395568}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 10732a0b8dd145cf824d601176ebc764, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  requirementText: B needs to be central
+  isRequirementMet: 0
+  requiredDistance: 0.05
+  virtualObjectType: 4
+  distanceType: 0
+  externalObject: {fileID: 0}
+--- !u!114 &8222231670630269868
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5367671735736395568}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0189c5d9d8d946d887381e5697f6bdc1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  requirementText: All need to be non overlapping
+  isRequirementMet: 0
+  requiredDistance: 0.05
+--- !u!114 &7786876396798669053
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5367671735736395568}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4dd6f93b334c47a5b01728231fb375aa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  requirementText: O needs to be far from others
+  isRequirementMet: 0
+  requiredDistance: 0.3
+  virtualObjectType: 3
+  distanceType: 1

@@ -1,0 +1,96 @@
+// Copyright 2025 URAV ADVANCED LEARNING SYSTEMS PRIVATE LIMITED
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+#pragma kernel CSMain
+
+// Input buffers (read-only)
+ByteAddressBuffer YBuffer;
+ByteAddressBuffer UBuffer;
+ByteAddressBuffer VBuffer;
+
+// Row strides
+uint YRowStride;
+uint UVRowStride;
+
+// Pixel strides
+uint UVPixelStride;
+
+// Image dimensions
+uint TargetWidth;
+uint TargetHeight;
+
+// Output texture (read-write)
+RWTexture2D<float4> OutputTexture;
+
+// Helper function to get a byte from a ByteAddressBuffer.
+//  buffer: The ByteAddressBuffer.
+//  byteIndex: The *byte* index (offset) into the buffer.
+uint GetByteFromBuffer(ByteAddressBuffer buffer, uint byteIndex)
+{
+    // Calculate the 32-bit word offset (each word is 4 bytes).
+    uint wordOffset = byteIndex / 4;
+
+    // Load the 32-bit word containing the byte.
+    uint word = buffer.Load(wordOffset * 4); // MUST multiply by 4 for ByteAddressBuffer.Load()
+
+    // Calculate the byte position *within* the word (0, 1, 2, or 3).
+    uint byteInWord = byteIndex % 4;
+
+    // Extract the correct byte using bit shifts and masking.
+    return (word >> (byteInWord * 8)) & 0xFF;
+}
+
+// Helper function to convert YUV to RGB.
+float3 YUVtoRGB(uint y, uint u, uint v)
+{
+    // ITU-R BT.601 standard convertion
+    
+    float yf = float(y) +  16.0;
+    float uf = float(u) - 128.0;
+    float vf = float(v) - 128.0;
+    
+    float3 rgb = float3(
+        yf + 1.402 * vf,
+        yf - 0.344136 * uf - 0.714136 * vf,
+        yf + 1.772 * uf
+    );
+    
+    return saturate(rgb / 255.0);
+}
+
+[numthreads(8, 8, 1)]
+void CSMain(uint3 id : SV_DispatchThreadID)
+{
+    if (id.x >= TargetWidth || id.y >= TargetHeight)
+        return;
+    
+    // The YUV stream is flipped, so we have to un-flip it.
+    uint flippedY = TargetHeight - 1 - id.y;
+
+    // Index of Y value in buffer.
+    uint yIndex = flippedY * YRowStride + id.x;
+    
+    // Index of the U and V values in the buffer. They are the same for YUV_420_888:
+    // https://developer.android.com/reference/android/graphics/ImageFormat#YUV_420_888
+    uint uvIndex = (flippedY / 2) * UVRowStride + (id.x / 2) * UVPixelStride;
+   
+    // Get Y, U, and V values.
+    uint yValue = GetByteFromBuffer(YBuffer, yIndex);
+    uint uValue = GetByteFromBuffer(UBuffer, uvIndex);
+    uint vValue = GetByteFromBuffer(VBuffer, uvIndex);
+    
+    // Convert them and set the output texture.
+    float3 converted = YUVtoRGB(yValue, uValue, vValue);
+    OutputTexture[id.xy] = float4(converted.rgb, 1.0);
+}
