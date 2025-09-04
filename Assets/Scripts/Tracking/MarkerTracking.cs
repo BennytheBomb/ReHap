@@ -203,8 +203,8 @@ namespace QuestMarkerTracking.Tracking
         {
             var grayscaleMat = ConvertYBufferToMat(yBuffer, ySize, _resolution.width, _resolution.height, yRowStride);
 
-            ProcessMarkerTracking(grayscaleMat, timestampNs);
-            // ProcessMarkerTracking(grayscaleMat, timestampNs).Forget();
+            // ProcessMarkerTracking(grayscaleMat, timestampNs);
+            ProcessMarkerTracking(grayscaleMat, timestampNs).Forget();
 
             return Task.CompletedTask; // Callback is being awaited, need to return Task to not block the thread
         }
